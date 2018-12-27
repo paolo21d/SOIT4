@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
@@ -35,15 +34,12 @@ public:
             throw "sem_post: failed";
     }
 
-
 private:
-
-sem_t sem;
+    sem_t sem;
 };
 
 class Condition {
     friend class Monitor;
-
 public:
     Condition() : w( 0 ) {
         waitingCount = 0;
@@ -91,7 +87,6 @@ public:
         if( cond.signal() )
             enter();
     }
-
 
 private:
     Semaphore s;
