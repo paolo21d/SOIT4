@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
@@ -25,38 +24,35 @@ public:
         sem_destroy( & sem );
     }
 
-    void p() {
+    void down() {
         if( sem_wait( & sem ) != 0 )
             throw "sem_wait: failed";
     }
 
-    void v() {
+    void up() {
         if( sem_post( & sem ) != 0 )
             throw "sem_post: failed";
     }
 
-
 private:
-
-sem_t sem;
+    sem_t sem;
 };
 
 class Condition {
     friend class Monitor;
-
 public:
     Condition() : w( 0 ) {
         waitingCount = 0;
     }
 
     void wait() {
-        w.p();
+        w.down();
     }
 
     bool signal() {
         if( waitingCount ) {
             -- waitingCount;
-            w.v();
+            w.up();
             return true;
         }//if
         else
@@ -74,11 +70,11 @@ public:
     Monitor() : s( 1 ) {}
 
     void enter() {
-        s.p();
+        s.down();
     }
 
     void leave() {
-        s.v();
+        s.up();
     }
 
     void wait( Condition & cond ) {
@@ -91,7 +87,6 @@ public:
         if( cond.signal() )
             enter();
     }
-
 
 private:
     Semaphore s;
