@@ -2,7 +2,8 @@
 #include <pthread.h>
 #include <time.h>
 #include <cstdlib>
-#include "MonitorUnix.h"
+#include <stdio.h>
+#include "Monitor.h"
 
 using namespace std;
 #define BUFSIZE 10
@@ -24,15 +25,15 @@ class Queue {
         buf[tail] = val;
         tail = (tail+1)%BUFSIZE;
         length++;
-        //printf("Wsadzam %d, size: %d\n", val, length);
-        cout<<"Wsadzam "<<val<<", size: "<<length<<endl;
+        printf("Wsadzam %d, size: %d\n", val, length);
+        //cout<<"Wsadzam "<<val<<", size: "<<length<<endl;
     }
     int getFromBuf(){
         int ret = buf[head];
         head = (head+1)%BUFSIZE;
         length--;
-        //printf("Wyjmuje %d\n", ret);
-        cout<<"Wyjmuje "<<ret<<endl;
+        printf("Wyjmuje %d\n", ret);
+        //cout<<"Wyjmuje "<<ret<<endl;
         return ret;
     }
     int size(){
@@ -77,9 +78,10 @@ void *Producer(void *idp){
     //params *p = (params *) par;
     //int id = p.id;
     int id = * ((int*)idp);
-    cout<<"Producent "<<id<<endl;
+    //cout<<"Producent "<<id<<endl;
+    printf("Producent %d\n", id);
     while(1){
-        cout<<"Wsadzam "<<id<<endl;
+        //cout<<"Wsadzam "<<id<<endl;
         sMonitor[id].add(id);
         sleep(1);
     }
@@ -88,9 +90,10 @@ void *Consumer(void *idp){
     //params *p = (params *) par;
     //int id = p.id;
     int id = * ((int*)idp);
-    cout<<"Konsument "<<id<<endl;
+    //cout<<"Konsument "<<id<<endl;
+    printf("Konsument %d\n", id);
     while(1){
-        cout<<"wyjmuje "<<id<<endl;
+        //cout<<"wyjmuje "<<id<<endl;
         sMonitor[id].remove();
         sleep(1);
     }

@@ -25,12 +25,12 @@ public:
         sem_destroy( & sem );
     }
 
-    void p() {
+    void down() {
         if( sem_wait( & sem ) != 0 )
             throw "sem_wait: failed";
     }
 
-    void v() {
+    void up() {
         if( sem_post( & sem ) != 0 )
             throw "sem_post: failed";
     }
@@ -50,13 +50,13 @@ public:
     }
 
     void wait() {
-        w.p();
+        w.down();
     }
 
     bool signal() {
         if( waitingCount ) {
             -- waitingCount;
-            w.v();
+            w.up();
             return true;
         }//if
         else
@@ -74,11 +74,11 @@ public:
     Monitor() : s( 1 ) {}
 
     void enter() {
-        s.p();
+        s.down();
     }
 
     void leave() {
-        s.v();
+        s.up();
     }
 
     void wait( Condition & cond ) {
