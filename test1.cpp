@@ -1,8 +1,8 @@
 #include <iostream>
 #include <pthread.h>
-#include <time.h>
+#include <ctime>
 #include <cstdlib>
-#include <stdio.h>
+#include <cstdio>
 #include "Monitor.h"
 
 using namespace std;
@@ -32,7 +32,7 @@ class Queue {
         int ret = buf[head];
         head = (head+1)%BUFSIZE;
         length--;
-        printf("Wyjmuje %d\n", ret);
+        printf("\tWyjmuje %d\n", ret);
         //cout<<"Wyjmuje "<<ret<<endl;
         return ret;
     }
@@ -78,8 +78,8 @@ void *Producer(void *idp){
     //params *p = (params *) par;
     //int id = p.id;
     int id = * ((int*)idp);
-    //cout<<"Producent "<<id<<endl;
-    printf("Producent %d\n", id);
+    cout<<"Producent "<<id<<endl;
+    //printf("Producent %d\n", id);
     while(1){
         //cout<<"Wsadzam "<<id<<endl;
         sMonitor[id].add(id);
@@ -90,23 +90,24 @@ void *Consumer(void *idp){
     //params *p = (params *) par;
     //int id = p.id;
     int id = * ((int*)idp);
-    //cout<<"Konsument "<<id<<endl;
-    printf("Konsument %d\n", id);
+    cout<<"Konsument "<<id<<endl;
+    //printf("Konsument %d\n", id);
     while(1){
         //cout<<"wyjmuje "<<id<<endl;
         sMonitor[id].remove();
-        sleep(1);
+        sleep(10);
     }
 }
 
 int main(){
     pthread_t producers[5];
     pthread_t consumers[5];
-
-    for(int i=0; i<2; ++i) {
-        pthread_create(&producers[i], NULL, Producer, &i);
-        pthread_create(&consumers[i], NULL, Consumer, &i);
+    int tab[5];
+    for(int i=0; i<5; ++i) tab[i]=i;
+    for(int i=0; i<1; ++i) {
+        pthread_create(&producers[i], NULL, Producer, &tab[i]);
+        pthread_create(&consumers[i], NULL, Consumer, &tab[i]);
     }
-    sleep(20);
+    sleep(30);
     pthread_exit(NULL);
 }
