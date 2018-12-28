@@ -40,61 +40,115 @@ class Queue {
         return length;
     }
 };
+class SingleMonitor;
+class GroupMonitor;
+
+
 class GroupMonitor: public Monitor{
-    
+    Condition groupEmpty;
+    int iloscPustych;
+    public:
+    GroupMonitor(): iloscPustych(ILOSC_KOLEJEK*BUFSIZE){};
+    void groupAdd(int a, int *tab, SingleMonitor sm[]){
+        enter();
+        if(iloscPustych==0) //pelne wszystkie bufory
+            wait(groupEmpty);
+        //int i=0;
+        for(int i=0; i<ILOSC_KOLEJEK; ++i){
+            int id = tab[i];
+            if(sm[id].getSize()>0){
+                sm[id].add(a, *this);
+                break;
+            }
+        }
+        iloscPustych--;
+        leave();
+    }
+    void zwieksz(){
+        enter();
+        iloscPustych++;
+        if(iloscPustych == 1) //czyli mozna juz wstawic cos, bo zostal wyjaty element z jakiejs kolejki
+            signal(groupEmpty);
+        leave();
+    }
+    void zmniejsz(){
+        enter();
+        iloscPustych--;
+        leave();
+    }
 };
 class SingleMonitor: public Monitor{
     Queue buffer;
     Condition full;
     Condition empty;
 public:
-    void add(int a) {
+    void add(int a, GroupMonitor &gm) {
         enter();
         if(buffer.size() == BUFSIZE)
             wait(empty);
         buffer.putToBuff(a);
+        //gm.zmniejsz();
         if(buffer.size() == 1)
             signal(full);
         leave();
     }
-    int remove() {
+    int remove(GroupMonitor &gm) {
         enter();
         if(buffer.size() == 0)
             wait(full);
         int ret = buffer.getFromBuf();
+        gm.zwieksz();
         if(buffer.size() == BUFSIZE-1)
             signal(empty);
         leave();
         return ret;
     }
+    int getSize(){
+        enter();
+        int size = buffer.size();
+        leave();
+        return size;
+    }
+    /*void checkAndAdd(int a, int &tab){
+    }*/
 };
-struct params{
-    int id;
-};
+void losujNumeryKolejek(int *tab) {
+    for(int i=0; i<ILOSC_KOLEJEK; ++i)
+        tab[i]=i;
+    int nrZamiana, tmp;
+    for(int i=0; i<ILOSC_KOLEJEK; ++i){
+        nrZamiana = rand()%ILOSC_KOLEJEK;
+        tmp=tab[i];
+        tab[i]=tab[nrZamiana];
+        tab[nrZamiana]=tmp;
+    }
+}
+///////////////////////////////////////////////////////////
 SingleMonitor sMonitor[5];
-//GroupMonitor groupMonitor;
+GroupMonitor gMonitor;
 
 void *Producer(void *idp){
-    //params *p = (params *) par;
-    //int id = p.id;
     int id = * ((int*)idp);
     cout<<"Producent "<<id<<endl;
+
+    int numeryKolejek[ILOSC_KOLEJEK];
     //printf("Producent %d\n", id);
     while(1){
+        losujNumeryKolejek(numeryKolejek);
+
         //cout<<"Wsadzam "<<id<<endl;
-        sMonitor[id].add(id);
+        //sMonitor[id].add(id, gMonitor);
+        gMonitor.groupAdd(id, numeryKolejek, sMonitor);
         sleep(1);
     }
 }
 void *Consumer(void *idp){
-    //params *p = (params *) par;
-    //int id = p.id;
     int id = * ((int*)idp);
     cout<<"Konsument "<<id<<endl;
     //printf("Konsument %d\n", id);
     while(1){
         //cout<<"wyjmuje "<<id<<endl;
-        sMonitor[id].remove();
+        sMonitor[id].remove(gMonitor);
         sleep(10);
     }
 }
