@@ -41,14 +41,14 @@ void *Producer(void *idp){
         //cout<<"Wsadzam "<<id<<endl;
         //sMonitor[id].add(id, gMonitor);
         gMonitor.groupAdd(id, numeryKolejek, sMonitor);
-        //sleep(1);
+        sleep(1);
     }
 }
 void *Consumer(void *idp){
     int id = * ((int*)idp);
     cout<<"Konsument "<<id<<endl;
     //printf("Konsument %d\n", id);
-    while(1){
+    while(1){ 
         cout<<"\tWyjmuje konsument "<<id<<endl;
         sMonitor[id].remove(gMonitor);
         sleep(10);
@@ -64,7 +64,7 @@ int main(){
         //pthread_create(&producers[i], NULL, Producer, &tab[i]);
         pthread_create(&consumers[i], NULL, Consumer, &tab[i]);
     }
-    for(int i=0; i<1; ++i){
+    for(int i=0; i<2; ++i){
         pthread_create(&producers[i], NULL, Producer, &tab[i]);
     }
     sleep(30);

@@ -39,6 +39,14 @@ class Queue {
     int size(){
         return length;
     }
+    void printfQueue(int nr){
+    printf("Queue %d size %d: ", nr, length);
+    int index = head;
+    for(int i=0; i<length; ++i, ++index)
+        printf("%d ", buf[index%BUFSIZE]);
+
+    printf("\n");
+}
 };
 class SingleMonitor;
 class GroupMonitor;
@@ -102,7 +110,7 @@ void GroupMonitor::groupAdd(const int &a, const int *tab, SingleMonitor *sm){
         for(int i=0; i<ILOSC_KOLEJEK; ++i){
             int id = tab[i];
             if(sm[id].getSize()<BUFSIZE){
-                cout<<"Probuje wstawiac do: "<<id<<endl;
+                //cout<<"Probuje wstawiac do: "<<id<<endl;
                 sm[id].add(a);
                 //cout<<"PO WSADZENIU!!!!!!"<<endl;
                 break;
