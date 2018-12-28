@@ -3,11 +3,9 @@
 #include <ctime>
 #include <cstdlib>
 #include <cstdio>
-#include "Monitor.h"
+#include "MonitorUnix.h"
 using namespace std;
 #define BUFSIZE 10
-#define ILOSC_KONSUMENTOW 5
-#define ILOSC_PRODUCENTOW 3
 #define ILOSC_KOLEJEK 5
 
 class Queue {
@@ -26,6 +24,7 @@ class Queue {
         tail = (tail+1)%BUFSIZE;
         length++;
         printf("Wsadzam %d, size: %d\n", val, length);
+        printfQueue();
         //cout<<"Wsadzam "<<val<<", size: "<<length<<endl;
     }
     int getFromBuf(){
@@ -33,14 +32,16 @@ class Queue {
         head = (head+1)%BUFSIZE;
         length--;
         printf("\tWyjmuje %d\n", ret);
+        printfQueue();
         //cout<<"Wyjmuje "<<ret<<endl;
         return ret;
     }
     int size(){
         return length;
     }
-    void printfQueue(int nr){
-    printf("Queue %d size %d: ", nr, length);
+    void printfQueue(/*int nr*/){
+    //printf("Queue %d size %d: ", nr, length);
+    printf("Queue size %d :", length);
     int index = head;
     for(int i=0; i<length; ++i, ++index)
         printf("%d ", buf[index%BUFSIZE]);
@@ -79,7 +80,6 @@ void SingleMonitor::add(const int &a) {
         //gm.zmniejsz();
         if(buffer.size() == 1)
             signal(full);
-        //cout<<"po signal"<<endl;
         leave();
     }
 int SingleMonitor::remove(GroupMonitor &gm) {
@@ -104,15 +104,13 @@ int SingleMonitor::getSize(){
 void GroupMonitor::groupAdd(const int &a, const int *tab, SingleMonitor *sm){
         enter();
         if(iloscPustych==0) //pelne wszystkie bufory
-            wait(groupEmpty);
-        //int i=0;
+            wait(groupEmpty); //czekam aż będzie 1 kolejka nie pełna
         //cout<<"szukam pustej"<<endl;
         for(int i=0; i<ILOSC_KOLEJEK; ++i){
             int id = tab[i];
             if(sm[id].getSize()<BUFSIZE){
-                //cout<<"Probuje wstawiac do: "<<id<<endl;
+                cout<<"Wstawiam do: "<<id<<endl;
                 sm[id].add(a);
-                //cout<<"PO WSADZENIU!!!!!!"<<endl;
                 break;
             }
         }
