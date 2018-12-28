@@ -50,6 +50,7 @@ class SingleMonitor: public Monitor{
 public:
     void add(const int &a);
     int remove(GroupMonitor &gm);
+    void signalFull();
     int getSize();
 };
 class GroupMonitor: public Monitor{
@@ -70,7 +71,7 @@ void SingleMonitor::add(const int &a) {
         //gm.zmniejsz();
         if(buffer.size() == 1)
             signal(full);
-        cout<<"po signal"<<endl;
+        //cout<<"po signal"<<endl;
         leave();
     }
 int SingleMonitor::remove(GroupMonitor &gm) {
@@ -78,10 +79,11 @@ int SingleMonitor::remove(GroupMonitor &gm) {
         if(buffer.size() == 0)
             wait(full);
         int ret = buffer.getFromBuf();
-        gm.zwieksz();
+        //gm.zwieksz();
         if(buffer.size() == BUFSIZE-1)
             signal(empty);
         leave();
+        gm.zwieksz();
         return ret;
     }
 int SingleMonitor::getSize(){
@@ -102,7 +104,7 @@ void GroupMonitor::groupAdd(const int &a, const int *tab, SingleMonitor *sm){
             if(sm[id].getSize()<BUFSIZE){
                 cout<<"Probuje wstawiac do: "<<id<<endl;
                 sm[id].add(a);
-                cout<<"PO WSADZENIU!!!!!!"<<endl;
+                //cout<<"PO WSADZENIU!!!!!!"<<endl;
                 break;
             }
         }

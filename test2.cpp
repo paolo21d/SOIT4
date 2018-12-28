@@ -37,11 +37,11 @@ void *Producer(void *idp){
     //printf("Producent %d\n", id);
     while(1){
         losujNumeryKolejek(numeryKolejek);
-        cout<<"Producent "<<id<<" wylosowal"<<endl;
+        //cout<<"Producent "<<id<<" wylosowal"<<endl;
         //cout<<"Wsadzam "<<id<<endl;
         //sMonitor[id].add(id, gMonitor);
         gMonitor.groupAdd(id, numeryKolejek, sMonitor);
-        sleep(1);
+        //sleep(1);
     }
 }
 void *Consumer(void *idp){
@@ -49,7 +49,7 @@ void *Consumer(void *idp){
     cout<<"Konsument "<<id<<endl;
     //printf("Konsument %d\n", id);
     while(1){
-        //cout<<"wyjmuje "<<id<<endl;
+        cout<<"\tWyjmuje konsument "<<id<<endl;
         sMonitor[id].remove(gMonitor);
         sleep(10);
     }
