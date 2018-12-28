@@ -4,12 +4,12 @@
 #include <cstdlib>
 #include <cstdio>
 #include "Monitor.h"
-
 using namespace std;
 #define BUFSIZE 10
 #define ILOSC_KONSUMENTOW 5
 #define ILOSC_PRODUCENTOW 3
 #define ILOSC_KOLEJEK 5
+
 class Queue {
     int buf[BUFSIZE];
     int head, tail, length;
@@ -48,7 +48,21 @@ class SingleMonitor: public Monitor{
     Condition full;
     Condition empty;
 public:
-    void add(int a, GroupMonitor &gm) {
+    void add(int a, GroupMonitor &gm);
+    int remove(GroupMonitor &gm);
+    int getSize();
+};
+class GroupMonitor: public Monitor{
+    Condition groupEmpty;
+    int iloscPustych;
+    public:
+    GroupMonitor(): iloscPustych(ILOSC_KOLEJEK*BUFSIZE){};
+    void groupAdd(int a, int *tab, SingleMonitor *sm);
+    void zwieksz();
+    void zmniejsz();
+};
+//////////////definicje
+void SingleMonitor::add(int a, GroupMonitor &gm) {
         enter();
         if(buffer.size() == BUFSIZE)
             wait(empty);
@@ -58,7 +72,7 @@ public:
             signal(full);
         leave();
     }
-    int remove(GroupMonitor &gm) {
+int SingleMonitor::remove(GroupMonitor &gm) {
         enter();
         if(buffer.size() == 0)
             wait(full);
@@ -69,23 +83,14 @@ public:
         leave();
         return ret;
     }
-    int getSize(){
+int SingleMonitor::getSize(){
         enter();
         int size = buffer.size();
         leave();
         return size;
     }
-    /*void checkAndAdd(int a, int &tab){
-    }*/
-};
-SingleMonitor sMonitor[ILOSC_KOLEJEK];
 
-class GroupMonitor: public Monitor{
-    Condition groupEmpty;
-    int iloscPustych;
-    public:
-    GroupMonitor(): iloscPustych(ILOSC_KOLEJEK*BUFSIZE){};
-    void groupAdd(int a, int *tab, SingleMonitor *sm){
+void GroupMonitor::groupAdd(int a, int *tab, SingleMonitor *sm){
         enter();
         if(iloscPustych==0) //pelne wszystkie bufory
             wait(groupEmpty);
@@ -100,69 +105,16 @@ class GroupMonitor: public Monitor{
         iloscPustych--;
         leave();
     }
-    void zwieksz(){ //to jest wołane przy wyjmowaniu elementów z jakiejś kolejki przy operacji remove
+void GroupMonitor::zwieksz(){ //to jest wołane przy wyjmowaniu elementów z jakiejś kolejki przy operacji remove
         enter();
         iloscPustych++;
         if(iloscPustych == 1) //czyli mozna juz wstawic cos, bo zostal wyjaty element z jakiejs kolejki
             signal(groupEmpty);
         leave();
     }
-    void zmniejsz(){
+
+void GroupMonitor::zmniejsz(){
         enter();
         iloscPustych--;
         leave();
     }
-};
-GroupMonitor gMonitor;
-void losujNumeryKolejek(int *tab) {
-    for(int i=0; i<ILOSC_KOLEJEK; ++i)
-        tab[i]=i;
-    int nrZamiana, tmp;
-    for(int i=0; i<ILOSC_KOLEJEK; ++i){
-        nrZamiana = rand()%ILOSC_KOLEJEK;
-        tmp=tab[i];
-        tab[i]=tab[nrZamiana];
-        tab[nrZamiana]=tmp;
-    }
-}
-///////////////////////////////////////////////////////////
-
-
-void *Producer(void *idp){
-    int id = * ((int*)idp);
-    cout<<"Producent "<<id<<endl;
-
-    int numeryKolejek[ILOSC_KOLEJEK];
-    //printf("Producent %d\n", id);
-    while(1){
-        losujNumeryKolejek(numeryKolejek);
-
-        //cout<<"Wsadzam "<<id<<endl;
-        //sMonitor[id].add(id, gMonitor);
-        gMonitor.groupAdd(id, numeryKolejek, sMonitor);
-        sleep(1);
-    }
-}
-void *Consumer(void *idp){
-    int id = * ((int*)idp);
-    cout<<"Konsument "<<id<<endl;
-    //printf("Konsument %d\n", id);
-    while(1){
-        //cout<<"wyjmuje "<<id<<endl;
-        sMonitor[id].remove(gMonitor);
-        sleep(10);
-    }
-}
-
-int main(){
-    pthread_t producers[5];
-    pthread_t consumers[5];
-    int tab[5];
-    for(int i=0; i<5; ++i) tab[i]=i;
-    for(int i=0; i<1; ++i) {
-        pthread_create(&producers[i], NULL, Producer, &tab[i]);
-        pthread_create(&consumers[i], NULL, Consumer, &tab[i]);
-    }
-    sleep(30);
-    pthread_exit(NULL);
-}
