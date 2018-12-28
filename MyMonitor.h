@@ -48,7 +48,7 @@ class SingleMonitor: public Monitor{
     Condition full;
     Condition empty;
 public:
-    void add(int a, GroupMonitor &gm);
+    void add(const int &a);
     int remove(GroupMonitor &gm);
     int getSize();
 };
@@ -57,12 +57,12 @@ class GroupMonitor: public Monitor{
     int iloscPustych;
     public:
     GroupMonitor(): iloscPustych(ILOSC_KOLEJEK*BUFSIZE){};
-    void groupAdd(int a, int *tab, SingleMonitor *sm);
+    void groupAdd(const int &a, const int *tab, SingleMonitor *sm);
     void zwieksz();
     void zmniejsz();
 };
 //////////////definicje
-void SingleMonitor::add(int a, GroupMonitor &gm) {
+void SingleMonitor::add(const int &a) {
         enter();
         if(buffer.size() == BUFSIZE)
             wait(empty);
@@ -70,6 +70,7 @@ void SingleMonitor::add(int a, GroupMonitor &gm) {
         //gm.zmniejsz();
         if(buffer.size() == 1)
             signal(full);
+        cout<<"po signal"<<endl;
         leave();
     }
 int SingleMonitor::remove(GroupMonitor &gm) {
@@ -90,15 +91,18 @@ int SingleMonitor::getSize(){
         return size;
     }
 
-void GroupMonitor::groupAdd(int a, int *tab, SingleMonitor *sm){
+void GroupMonitor::groupAdd(const int &a, const int *tab, SingleMonitor *sm){
         enter();
         if(iloscPustych==0) //pelne wszystkie bufory
             wait(groupEmpty);
         //int i=0;
+        //cout<<"szukam pustej"<<endl;
         for(int i=0; i<ILOSC_KOLEJEK; ++i){
             int id = tab[i];
-            if(sm[id].getSize()>0){
-                sm[id].add(a, *this);
+            if(sm[id].getSize()<BUFSIZE){
+                cout<<"Probuje wstawiac do: "<<id<<endl;
+                sm[id].add(a);
+                cout<<"PO WSADZENIU!!!!!!"<<endl;
                 break;
             }
         }

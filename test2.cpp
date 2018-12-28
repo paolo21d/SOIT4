@@ -29,6 +29,7 @@ GroupMonitor gMonitor;
 
 
 void *Producer(void *idp){
+    srand(time(NULL));
     int id = * ((int*)idp);
     cout<<"Producent "<<id<<endl;
 
@@ -36,7 +37,7 @@ void *Producer(void *idp){
     //printf("Producent %d\n", id);
     while(1){
         losujNumeryKolejek(numeryKolejek);
-
+        cout<<"Producent "<<id<<" wylosowal"<<endl;
         //cout<<"Wsadzam "<<id<<endl;
         //sMonitor[id].add(id, gMonitor);
         gMonitor.groupAdd(id, numeryKolejek, sMonitor);
@@ -59,9 +60,12 @@ int main(){
     pthread_t consumers[5];
     int tab[5];
     for(int i=0; i<5; ++i) tab[i]=i;
-    for(int i=0; i<1; ++i) {
-        pthread_create(&producers[i], NULL, Producer, &tab[i]);
+    for(int i=0; i<5; ++i) {
+        //pthread_create(&producers[i], NULL, Producer, &tab[i]);
         pthread_create(&consumers[i], NULL, Consumer, &tab[i]);
+    }
+    for(int i=0; i<1; ++i){
+        pthread_create(&producers[i], NULL, Producer, &tab[i]);
     }
     sleep(30);
     pthread_exit(NULL);
