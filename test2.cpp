@@ -8,22 +8,22 @@
 
 using namespace std;
 //#define BUFSIZE 10
-#define ILOSC_KONSUMENTOW 5
-#define ILOSC_PRODUCENTOW 2
-#define ILOSC_KOLEJEK 5
+#define CONSUMER_QUANTITY 5
+#define PRODUCER_QUANTITY 2
+#define QUEUE_QUANTITY 5
 
-void losujNumeryKolejek(int *tab) {
-    for(int i=0; i<ILOSC_KOLEJEK; ++i)
+void randQueuesNumbers(int *tab) {
+    for(int i=0; i<QUEUE_QUANTITY; ++i)
         tab[i]=i;
-    int nrZamiana, tmp;
-    for(int i=0; i<ILOSC_KOLEJEK; ++i){
-        nrZamiana = rand()%ILOSC_KOLEJEK;
+    int noChange, tmp;
+    for(int i=0; i<QUEUE_QUANTITY; ++i){
+        noChange = rand()%QUEUE_QUANTITY;
         tmp=tab[i];
-        tab[i]=tab[nrZamiana];
-        tab[nrZamiana]=tmp;
+        tab[i]=tab[noChange];
+        tab[noChange]=tmp;
     }
 }
-SingleMonitor sMonitor[ILOSC_KOLEJEK];
+SingleMonitor sMonitor[QUEUE_QUANTITY];
 GroupMonitor gMonitor;
 
 ///////////////////////////////////////////////////////////
@@ -32,9 +32,9 @@ void *Producer(void *idp){
     int id = * ((int*)idp);
     cout<<"Producent "<<id<<endl;
 
-    int numeryKolejek[ILOSC_KOLEJEK];
+    int numeryKolejek[QUEUE_QUANTITY];
     while(1){
-        losujNumeryKolejek(numeryKolejek);
+        randQueuesNumbers(numeryKolejek);
         //sMonitor[id].add(id, gMonitor);
         gMonitor.groupAdd(id, numeryKolejek, sMonitor);
         sleep(1);
@@ -51,22 +51,22 @@ void *Consumer(void *idp){
 }
 
 int main(){
-    pthread_t producers[ILOSC_PRODUCENTOW];
-    pthread_t consumers[ILOSC_KONSUMENTOW];
+    pthread_t producers[PRODUCER_QUANTITY];
+    pthread_t consumers[CONSUMER_QUANTITY];
     int tab[5];
-    for(int i=0; i<max(ILOSC_KONSUMENTOW, ILOSC_PRODUCENTOW); ++i) tab[i]=i;
-    for(int i=0; i<ILOSC_KONSUMENTOW; ++i) {
+    for(int i=0; i<max(CONSUMER_QUANTITY, PRODUCER_QUANTITY); ++i) tab[i]=i;
+    for(int i=0; i<CONSUMER_QUANTITY; ++i) {
         pthread_create(&consumers[i], NULL, Consumer, &tab[i]);
     }
-    for(int i=0; i<ILOSC_PRODUCENTOW; ++i){
+    for(int i=0; i<PRODUCER_QUANTITY; ++i){
         pthread_create(&producers[i], NULL, Producer, &tab[i]);
     }
     sleep(30);
 
-    for(int i=0; i<ILOSC_KONSUMENTOW; ++i)
+    for(int i=0; i<CONSUMER_QUANTITY; ++i)
         pthread_cancel(consumers[i]);
 
-    for(int i=0; i<ILOSC_PRODUCENTOW; ++i)
+    for(int i=0; i<PRODUCER_QUANTITY; ++i)
         pthread_cancel(producers[i]);
     return 0;
     //pthread_exit(NULL);

@@ -9,7 +9,7 @@ using namespace std;
 #define BUFSIZE 10
 #define ILOSC_KONSUMENTOW 5
 #define ILOSC_PRODUCENTOW 3
-#define ILOSC_KOLEJEK 5
+#define QUEUE_QUANTITY 5
 class Queue {
     int buf[BUFSIZE];
     int head, tail, length;
@@ -53,7 +53,7 @@ public:
         if(buffer.size() == BUFSIZE)
             wait(empty);
         buffer.putToBuff(a);
-        //gm.zmniejsz();
+        //gm.decrease();
         if(buffer.size() == 1)
             signal(full);
         leave();
@@ -63,7 +63,7 @@ public:
         if(buffer.size() == 0)
             wait(full);
         int ret = buffer.getFromBuf();
-        gm.zwieksz();
+        gm.increase();
         if(buffer.size() == BUFSIZE-1)
             signal(empty);
         leave();
@@ -78,48 +78,48 @@ public:
     /*void checkAndAdd(int a, int &tab){
     }*/
 };
-SingleMonitor sMonitor[ILOSC_KOLEJEK];
+SingleMonitor sMonitor[QUEUE_QUANTITY];
 
 class GroupMonitor: public Monitor{
     Condition groupEmpty;
-    int iloscPustych;
+    int emptyQuantity;
     public:
-    GroupMonitor(): iloscPustych(ILOSC_KOLEJEK*BUFSIZE){};
+    GroupMonitor(): emptyQuantity(QUEUE_QUANTITY*BUFSIZE){};
     void groupAdd(int a, int *tab, SingleMonitor *sm){
         enter();
-        if(iloscPustych==0) //pelne wszystkie bufory
+        if(emptyQuantity==0) //pelne wszystkie bufory
             wait(groupEmpty);
         //int i=0;
-        for(int i=0; i<ILOSC_KOLEJEK; ++i){
+        for(int i=0; i<QUEUE_QUANTITY; ++i){
             int id = tab[i];
             if(sm[id].getSize()>0){
                 sm[id].add(a, *this);
                 break;
             }
         }
-        iloscPustych--;
+        emptyQuantity--;
         leave();
     }
-    void zwieksz(){ //to jest wołane przy wyjmowaniu elementów z jakiejś kolejki przy operacji remove
+    void increase(){ //to jest wołane przy wyjmowaniu elementów z jakiejś kolejki przy operacji remove
         enter();
-        iloscPustych++;
-        if(iloscPustych == 1) //czyli mozna juz wstawic cos, bo zostal wyjaty element z jakiejs kolejki
+        emptyQuantity++;
+        if(emptyQuantity == 1) //czyli mozna juz wstawic cos, bo zostal wyjaty element z jakiejs kolejki
             signal(groupEmpty);
         leave();
     }
-    void zmniejsz(){
+    void decrease(){
         enter();
-        iloscPustych--;
+        emptyQuantity--;
         leave();
     }
 };
 GroupMonitor gMonitor;
 void losujNumeryKolejek(int *tab) {
-    for(int i=0; i<ILOSC_KOLEJEK; ++i)
+    for(int i=0; i<QUEUE_QUANTITY; ++i)
         tab[i]=i;
     int nrZamiana, tmp;
-    for(int i=0; i<ILOSC_KOLEJEK; ++i){
-        nrZamiana = rand()%ILOSC_KOLEJEK;
+    for(int i=0; i<QUEUE_QUANTITY; ++i){
+        nrZamiana = rand()%QUEUE_QUANTITY;
         tmp=tab[i];
         tab[i]=tab[nrZamiana];
         tab[nrZamiana]=tmp;
@@ -132,7 +132,7 @@ void *Producer(void *idp){
     int id = * ((int*)idp);
     cout<<"Producent "<<id<<endl;
 
-    int numeryKolejek[ILOSC_KOLEJEK];
+    int numeryKolejek[QUEUE_QUANTITY];
     //printf("Producent %d\n", id);
     while(1){
         losujNumeryKolejek(numeryKolejek);

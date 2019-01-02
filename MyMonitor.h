@@ -6,7 +6,7 @@
 #include "MonitorUnix.h"
 using namespace std;
 #define BUFSIZE 10
-#define ILOSC_KOLEJEK 5
+#define QUEUE_QUANTITY 5
 
 class Queue {
     int buf[BUFSIZE];
@@ -64,12 +64,12 @@ public:
 };
 class GroupMonitor: public Monitor{
     Condition groupEmpty;
-    int iloscPustych;
+    int emptyQuantity;
     public:
-    GroupMonitor(): iloscPustych(ILOSC_KOLEJEK*BUFSIZE){};
+    GroupMonitor(): emptyQuantity(QUEUE_QUANTITY*BUFSIZE){};
     void groupAdd(const int &a, const int *tab, SingleMonitor *sm);
-    void zwieksz();
-    void zmniejsz();
+    void increase();
+    void decrease();
 };
 //////////////definicje
 void SingleMonitor::add(const int &a) {
@@ -77,7 +77,7 @@ void SingleMonitor::add(const int &a) {
         if(buffer.size() == BUFSIZE)
             wait(empty);
         buffer.putToBuff(a);
-        //gm.zmniejsz();
+        //gm.decrease();
         if(buffer.size() == 1)
             signal(full);
         leave();
@@ -87,11 +87,10 @@ int SingleMonitor::remove(GroupMonitor &gm) {
         if(buffer.size() == 0)
             wait(full);
         int ret = buffer.getFromBuf();
-        //gm.zwieksz();
         if(buffer.size() == BUFSIZE-1)
             signal(empty);
         leave();
-        gm.zwieksz();
+        gm.increase();
         return ret;
     }
 int SingleMonitor::getSize(){
@@ -103,10 +102,10 @@ int SingleMonitor::getSize(){
 
 void GroupMonitor::groupAdd(const int &a, const int *tab, SingleMonitor *sm){
         enter();
-        if(iloscPustych==0) //pelne wszystkie bufory
+        if(emptyQuantity==0) //pelne wszystkie bufory
             wait(groupEmpty); //czekam aż będzie 1 kolejka nie pełna
         //cout<<"szukam pustej"<<endl;
-        for(int i=0; i<ILOSC_KOLEJEK; ++i){
+        for(int i=0; i<QUEUE_QUANTITY; ++i){
             int id = tab[i];
             if(sm[id].getSize()<BUFSIZE){
                 cout<<"Wstawiam do: "<<id<<endl;
@@ -114,19 +113,19 @@ void GroupMonitor::groupAdd(const int &a, const int *tab, SingleMonitor *sm){
                 break;
             }
         }
-        iloscPustych--;
+        emptyQuantity--;
         leave();
     }
-void GroupMonitor::zwieksz(){ //to jest wołane przy wyjmowaniu elementów z jakiejś kolejki przy operacji remove
+void GroupMonitor::increase(){ //to jest wołane przy wyjmowaniu elementów z jakiejś kolejki przy operacji remove
         enter();
-        iloscPustych++;
-        if(iloscPustych == 1) //czyli mozna juz wstawic cos, bo zostal wyjaty element z jakiejs kolejki
+        emptyQuantity++;
+        if(emptyQuantity == 1) //czyli mozna juz wstawic cos, bo zostal wyjaty element z jakiejs kolejki
             signal(groupEmpty);
         leave();
     }
 
-void GroupMonitor::zmniejsz(){
+void GroupMonitor::decrease(){
         enter();
-        iloscPustych--;
+        emptyQuantity--;
         leave();
     }
